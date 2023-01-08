@@ -4,9 +4,9 @@
 
 ### Meetings
 
-|      Date      | Topics | Place | Duration | Files |
-|:--------------:|:------:|:-----:|:--------:|:-----:|
-| 1/8 (Expected) |        |       |          |       |
+| Date |        Topics       |  Place  |  Duration |                                                 Files                                                 |
+|:----:|:-------------------:|:-------:|:---------:|:-----------------------------------------------------------------------------------------------------:|
+|  1/8 | Only Linear Algebra | Discord | 1.3 ~ 1.8 | [Files](https://github.com/enfycius/ML-Notes/blob/main/Linear%20Algebra/1.8/Linear_Algebra__1_8_.pdf) |
 
 ### References
 
