@@ -1,0 +1,28 @@
+{
+    "jupyter.kernels.filter": [
+        {
+            "path": "eddylily282d6a244174552185a16a36403878ed539a1f23241ff7da549d47da025afbc8",
+            "type": "remoteKernelSpec"
+        },
+        {
+            "path": "enfy_py282d6a244174552185a16a36403878ed539a1f23241ff7da549d47da025afbc8",
+            "type": "remoteKernelSpec"
+        },
+        {
+            "path": "enfycius282d6a244174552185a16a36403878ed539a1f23241ff7da549d47da025afbc8",
+            "type": "remoteKernelSpec"
+        },
+        {
+            "path": "popn0653282d6a244174552185a16a36403878ed539a1f23241ff7da549d47da025afbc8",
+            "type": "remoteKernelSpec"
+        },
+        {
+            "path": "python3282d6a244174552185a16a36403878ed539a1f23241ff7da549d47da025afbc8",
+            "type": "remoteKernelSpec"
+        },
+        {
+            "path": "/usr/bin/python3",
+            "type": "pythonEnvironment"
+        }
+    ]
+}
