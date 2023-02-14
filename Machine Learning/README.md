@@ -14,6 +14,7 @@
 |      1/22      | Only Machine Learning | Discord |             |                                                                                                                                                                                                                                      |
 |      1/31      | Only Machine Learning | Discord |             |                                                                                                                                                                                                                                      |
 |       2/4      | Only Machine Learning | Discord |             |                                                                                                                                                                                                                                      |
+|      2/14      | Only Machine Leanring | Discord |             |                                                                                                                                                                                                                                      |
 
 ### References
 
