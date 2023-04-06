@@ -18,6 +18,7 @@
 
   * [Projects](#)
   * [Resources](#)
+  * [Tutorials](#)
   * [License](#)
 
 ## :star: Projects
