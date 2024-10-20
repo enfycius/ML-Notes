@@ -1,6 +1,12 @@
 import torch
 import inspect
 
+def add_to_class(Class):
+    def wrapper(obj):
+        setattr(Class, obj.__name__, obj)
+
+    return wrapper
+
 class Hyperparameters:
     def save_hyperparameters(self, ignore=[]):
         raise NotImplemented
