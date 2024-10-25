@@ -8,7 +8,46 @@ from torch import nn
 
 from IPython import display
 from matplotlib import pyplot as plt
+import matplotlib as mpl
 
+def set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend):
+    axes.set_xlabel(xlabel), axes.set_ylabel(ylabel)
+    axes.set_xscale(xscale), axes.set_yscale(yscale)
+    axes.set_xlim(xlim), axes.set_ylim(ylim)
+
+    if legend:
+        axes.legend(legend)
+
+    axes.grid()
+
+def plot(X, Y=None, xlabel=None, ylabel=None, legend=[], xlim=None,
+         ylim=None, xscale="linear", yscale="linear",
+         fmts=("-", "m--", "g-.", "r:"), figsize=(3.5, 2.5), axes=None):
+    def has_one_axis(X):
+        return (hasattr(X, "ndim") and X.ndim == 1 or isinstance(X, list) \
+                and not hasattr(X[0], "__len__"))
+
+    if has_one_axis(X): X = [X]
+
+    if Y is None:
+        X, Y = [[]] * len(X), X
+    elif has_one_axis(Y):
+        Y = [Y]
+    
+    if len(X) != len(Y):
+        X = X * len(Y)
+
+    mpl.rcParams["figure.figsize"] = figsize
+
+    if axes is None:
+        axes = plt.gca()
+    
+    axes.cla()
+
+    for x, y, fmt in zip(X, Y, fmts):
+        axes.plot(x, y, fmt) if len(x) else axes.plot(y, fmt)
+
+    set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
 
 def add_to_class(Class):
     def wrapper(obj):
@@ -253,3 +292,63 @@ class Trainer(Hyperparameters):
         if norm > grad_clip_val:
             for param in params:
                 param.grad[:] *= grad_clip_val / norm
+
+class LinearRegression(Module):
+    def __init__(self, lr):
+        super().__init__()
+        self.save_hyperparameters()
+        self.net = nn.LazyLinear(1)
+        self.net.weight.data.normal_(0, 0.01)
+        self.net.bias.data.fill_(0)
+
+@add_to_class(LinearRegression)
+def forward(self, X):
+    return self.net(X)
+
+@add_to_class(LinearRegression)
+def loss(self, y_hat, y):
+    fn = nn.MSELoss()
+    
+    return fn(y_hat, y)
+
+@add_to_class(LinearRegression)
+def configure_optimizers(self):
+    return torch.optim.SGD(self.parameters(), self.lr)
+
+@add_to_class(LinearRegression)
+def get_w_b(self):
+    return (self.net.weight.data, self.net.bias.data)
+
+class SGD(Hyperparameters):
+    def __init__(self, params, lr):
+        self.save_hyperparameters()
+
+    def step(self):
+        for param in self.params:
+            param -= self.lr * param.grad
+
+    def zero_grad(self):
+        for param in self.params:
+            if param.grad is not None:
+                param.grad.zero_()
+
+class LinearRegressionScratch(Module):
+    def __init__(self, num_inputs, lr, sigma=0.01):
+        super().__init__()
+        self.save_hyperparameters()
+        self.w = torch.normal(0, sigma, (num_inputs, 1), requires_grad=True)
+        self.b = torch.zeros(1, requires_grad=True)
+
+@add_to_class(LinearRegressionScratch)
+def forward(self, X):
+    return torch.matmul(X, self.w) + self.b
+
+@add_to_class(LinearRegressionScratch)
+def loss(self, y_hat, y):
+    l = (y_hat - y) ** 2 / 2
+
+    return l.mean()
+
+@add_to_class(LinearRegressionScratch)
+def configure_optimizers(self):
+    return SGD(self.parameters(), self.lr)
