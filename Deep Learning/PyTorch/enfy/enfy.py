@@ -6,8 +6,13 @@ import numpy as np
 
 from torch import nn
 
+import torchvision
+
+from torchvision import transforms
+
 from IPython import display
 from matplotlib import pyplot as plt
+
 import matplotlib as mpl
 
 def set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend):
@@ -54,6 +59,27 @@ def add_to_class(Class):
         setattr(Class, obj.__name__, obj)
 
     return wrapper
+
+def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):
+    figsize = (num_cols * scale, num_rows * scale)
+    
+    _, axes = plt.subplots(num_rows, num_cols, figsize=figsize)
+    axes = axes.flatten()
+
+    for i, (ax, img) in enumerate(zip(axes, imgs)):
+        try:
+            img = img.detach().cpu().numpy() if img.is_cuda else img.detach().cpu().numpy()
+        except:
+            pass
+
+        ax.imshow(img)
+        ax.axes.get_xaxis().set_visible(False)
+        ax.axes.get_yaxis().set_visible(False)
+
+        if titles:
+            ax.set_title(titles[i])
+
+    return axes
 
 class Hyperparameters:
     def save_hyperparameters(self, ignore=[]):
@@ -352,3 +378,94 @@ def loss(self, y_hat, y):
 @add_to_class(LinearRegressionScratch)
 def configure_optimizers(self):
     return SGD(self.parameters(), self.lr)
+
+class Classifier(Module):
+    def validation_step(self, batch):
+        Y_hat = self(*batch[:-1])
+
+        self.plot("loss", self.loss(Y_hat, batch[-1]), train=False)
+        self.plot("acc", self.accuracy(Y_hat, batch[-1]), train=False)
+
+@add_to_class(Module)
+def configure_optimizers(self):
+    return torch.optim.SGD(self.parameters(), lr=self.lr)
+
+@add_to_class(Classifier)
+def accuracy(self, Y_hat, Y, averaged=True):
+    Y_hat = Y_hat.reshape((-1, Y_hat.shape[-1]))
+    preds = Y_hat.argmax(axis=1).type(Y.dtype)
+    compare = (preds == Y.reshape(-1)).type(torch.float32)
+
+    return compare.mean() if averaged else compare
+
+def softmax(X):
+    X_exp = torch.exp(X)
+    partition = X_exp.sum(1, keepdims=True)
+
+    return X_exp / partition
+
+class SoftmaxRegressionScratch(Classifier):
+    def __init__(self, num_inputs, num_outputs, lr, sigma=0.01):
+        super().__init__()
+        self.save_hyperparameters()
+        self.W = torch.normal(0, sigma, size=(num_inputs, num_outputs),
+                              requires_grad=True)
+        self.b = torch.zeros(num_outputs, requires_grad=True)
+
+    def parameters(self):
+        return [self.W, self.b]
+
+@add_to_class(SoftmaxRegressionScratch)
+def forward(self, X):
+    X = X.reshape((-1, self.W.shape[0]))
+    
+    return softmax(torch.matmul(X, self.W) + self.b)
+
+def cross_entropy(y_hat, y):
+    return -torch.log(y_hat[list(range(len(y_hat))), y]).mean()
+
+@add_to_class(SoftmaxRegressionScratch)
+def loss(self, y_hat, y):
+    return cross_entropy(y_hat, y)
+
+class SoftmaxRegression(Classifier):
+    def __init__(self, num_outputs, lr):
+        super().__init__()
+        self.save_hyperparameters()
+        self.net = nn.Sequential(nn.Flatten(),
+                                 nn.LazyLinear(num_outputs))
+        
+    def forward(self, X):
+        return self.net(X)
+
+class FashionMNIST(DataModule):
+    def __init__(self, batch_size=64, resize=(28, 28)):
+        super().__init__()
+        self.save_hyperparameters()
+
+        trans = transforms.Compose([transforms.Resize(resize),
+        transforms.ToTensor()])
+
+        self.train = torchvision.datasets.FashionMNIST(
+            root = self.root, train=True, transform=trans, download=True
+        )
+
+        self.val = torchvision.datasets.FashionMNIST(
+            root=self.root, train=False, transform=trans, download=True
+        )
+
+@add_to_class(FashionMNIST)
+def visualize(self, batch, nrows=1, ncols=8, labels=[]):
+    X, y = batch
+    
+    if not labels:
+        labels = self.text_labels(y)
+
+    show_images(X.squeeze(1), nrows, ncols, titles=labels)
+
+@add_to_class(FashionMNIST)
+def get_dataloader(self, train):
+    data = self.train if train else self.val
+
+    return torch.utils.data.DataLoader(data, self.batch_size, shuffle=train,
+                                       num_workers=self.num_workers)
